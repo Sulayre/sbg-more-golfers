@@ -1,10 +1,11 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
+using UnityEngine;
 
 namespace MoreGolfers;
 
@@ -13,20 +14,29 @@ public class MoreGolfersPlugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
     public static ConfigEntry<float> MaxPlayersConfig;
-    
+    public static GameManager gameManager;
     private void Awake()
     {
         Logger = base.Logger;
         MaxPlayersConfig = Config.Bind("General", "MaxPlayers", 32f, "Player limit");
         var harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
-    
+
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded and patches applied!");
     }
-    
+
     public static float GetCustomMaxPlayers()
     {
         return MoreGolfersPlugin.MaxPlayersConfig.Value;
+    }
+    public static float gETcURRENTpLAYER()
+    {
+        if (MoreGolfersPlugin.gameManager == null)
+        {
+            MoreGolfersPlugin.gameManager = GameObject.FindAnyObjectByType<GameManager>();
+            if (MoreGolfersPlugin.gameManager == null) return GetCustomMaxPlayers();
+        }
+        return gameManager.remotePlayers.Count;
     }
 }
 
@@ -42,13 +52,15 @@ public static class SliderLogicPatch
         {
             if (codes[i].opcode == OpCodes.Ldc_I4_S && codes[i].OperandIs(16))
             {
-                codes[i].operand = (int) MoreGolfersPlugin.GetCustomMaxPlayers() ;
+                int newValue = (int)MoreGolfersPlugin.GetCustomMaxPlayers();
+                codes[i] = new CodeInstruction(OpCodes.Ldc_I4, newValue);
                 finds++;
                 found = true;
+
                 if (finds > 1)
                 {
                     MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu delegate");
-                    break;   
+                    break;
                 }
             }
         }
@@ -84,24 +96,47 @@ public static class MatchSetupMenu_Patch
 [HarmonyPatch(typeof(TeeingPlatformSettings), "MaxTeeCount", MethodType.Getter)]
 class PatchMaxTeeCount
 {
-    static bool Prefix(ref int __result) 
+    static bool Prefix(ref int __result)
     {
+        if (MoreGolfersPlugin.gameManager == null)
+        {
+            MoreGolfersPlugin.gameManager = GameObject.FindAnyObjectByType<GameManager>();
+            if (MoreGolfersPlugin.gameManager == null) return false;
+        }
         __result = (int)MoreGolfersPlugin.MaxPlayersConfig.Value / 4;
         // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
-        return false; 
+        return false;
     }
 }
-
-[HarmonyPatch(typeof(GolfTeeManager), "ReturnHitTeeInternal")]
-public static class PatchReturnHitTeeInternal
+[HarmonyPatch(typeof(TeeingPlatformSettings), "DistanceBetweenTees", MethodType.Getter)]
+class PatchDistanceBetweenTees
 {
-    private static readonly AccessTools.FieldRef<GolfTeeManager, int> MaxPoolSizeRef = 
-        AccessTools.FieldRefAccess<GolfTeeManager, int>("maxHitTeePoolSize");
-    
-    [HarmonyPrefix]
-    static void Prefix(GolfTeeManager __instance)
+    static bool Prefix(ref float __result)
     {
-        MaxPoolSizeRef(__instance) = (int)MoreGolfersPlugin.MaxPlayersConfig.Value;
-        MoreGolfersPlugin.Logger.LogInfo("Patched GolfTeeManager.maxHitTeePoolSize through GolfTeeManager.ReturnHitTeeInternal");
+
+        if (MoreGolfersPlugin.gameManager == null)
+        {
+            MoreGolfersPlugin.gameManager = GameObject.FindAnyObjectByType<GameManager>();
+            if (MoreGolfersPlugin.gameManager == null) return false;
+        }
+
+        __result = 16f / (float)((MoreGolfersPlugin.gETcURRENTpLAYER() + 1) / MoreGolfersPlugin.gETcURRENTpLAYER() >= 8 ? 4 : 2);
+        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
+        return false;
+    }
+}
+[HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Getter)]
+class PatchFirstTeeOffset
+{
+    static bool Prefix(ref float __result)
+    {
+        float currentPlayers = MoreGolfersPlugin.gETcURRENTpLAYER();
+        float divisor = currentPlayers >= 8 ? 4f : 2f;
+        float t = MoreGolfersPlugin.GetCustomMaxPlayers() / divisor / divisor;
+        t = Mathf.Clamp01(t);
+
+        __result = Mathf.Lerp(0f, 7f, t);
+        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
+        return false;
     }
 }
