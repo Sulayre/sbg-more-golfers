@@ -13,6 +13,7 @@ public class MoreGolfersPlugin : BaseUnityPlugin
     internal static new ManualLogSource Logger;
     public static ConfigEntry<float> MaxPlayersConfig;
     private static Type _gmType = typeof(GameManager);
+    
     private void Awake()
     {
         Logger = base.Logger;
@@ -21,45 +22,22 @@ public class MoreGolfersPlugin : BaseUnityPlugin
         harmony.PatchAll();
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded and patches applied!");
     }
+    
     public static float GetCustomMaxPlayers()
     {
         return MaxPlayersConfig.Value;
     }
+    
     public static float GetCurrentPlayerCount()
     {
-        Logger.LogInfo("Attempting to get current player count");
+        //Logger.LogInfo("Attempting to get current player count");
         var connectionIds = BNetworkManager.ServerConnectionIds;
         if (connectionIds != null)
         {
             var count = connectionIds.Count;
-            Logger.LogInfo($"{count} players found");
+            //Logger.LogInfo($"{count} players found");
             return count;
         }
-        /*
-        var gmInstance = FindFirstObjectByType(_gmType);
-        if (gmInstance != null)
-        {
-            try
-            {
-                var field = _gmType.GetField("remotePlayers",
-                    BindingFlags.NonPublic |
-                    BindingFlags.Instance);
-                if (field != null)
-                {
-                    var listValue = field.GetValue(gmInstance);
-                    if (listValue is System.Collections.IList list)
-                    {
-                        float count = list.Count + 1;
-                        Logger.LogInfo($"{count} players found");
-                        return count;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"Error accessing remotePlayers: {e.Message}");
-            }
-        }*/
         Logger.LogWarning("BNetworkManager's singleton has not been initialized");
         return GetCustomMaxPlayers();
     }

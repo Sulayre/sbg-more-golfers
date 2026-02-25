@@ -27,7 +27,7 @@ public static class SliderLogicPatch
 
                 if (finds > 1)
                 {
-                    MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu delegate");
+                    //MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu delegate");
                     break;
                 }
             }
@@ -53,7 +53,7 @@ public static class PatchMatchSetupMenu
                 instruction.opcode = OpCodes.Call;
                 instruction.operand = AccessTools.Method(typeof(MoreGolfersPlugin), nameof(MoreGolfersPlugin.GetCustomMaxPlayers));
                 found = true;
-                MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu.onStartClient");
+                //MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu.onStartClient");
             }
 
             yield return instruction;
@@ -81,7 +81,7 @@ class PatchDistanceBetweenTees
     static bool Prefix(ref float __result)
     {
         __result = 16f / ((MoreGolfersPlugin.GetCurrentPlayerCount() + 1) / MoreGolfersPlugin.GetCurrentPlayerCount() >= 8 ? 4 : 2);
-        MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.DistanceBetweenTees");
+        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.DistanceBetweenTees");
         return false;
     }
 }
@@ -92,11 +92,11 @@ class PatchFirstTeeOffset
     {
         float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
         float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = MoreGolfersPlugin.GetCustomMaxPlayers() / divisor / divisor;
+        float t = (currentPlayers / divisor) / MoreGolfersPlugin.GetCustomMaxPlayers();
         t = Mathf.Clamp01(t);
 
         __result = Mathf.Lerp(0f, 7f, t);
-        MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.FirstTeeOffset");
+        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.FirstTeeOffset");
         return false;
     }
 }
@@ -110,7 +110,7 @@ public static class PatchPlayerOcclusionManager
         __instance.EnsureSingleton();
         __instance.transforms = new TransformAccessArray((int)MoreGolfersPlugin.GetCustomMaxPlayers());
         __instance.visibilty = new NativeList<PlayerOcclusionManager.State>((int)MoreGolfersPlugin.GetCustomMaxPlayers()/2, Allocator.Persistent);
-        MoreGolfersPlugin.Logger.LogInfo("Patched PlayerOcclusionManager.Awake");
+        //MoreGolfersPlugin.Logger.LogInfo("Patched PlayerOcclusionManager.Awake");
         return false;
     }
 
