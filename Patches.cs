@@ -80,16 +80,18 @@ class PatchDistanceBetweenTees
 {
     static bool Prefix(ref float __result)
     {
+
         float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
         float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = (divisor / currentPlayers) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
+        float t = (currentPlayers / divisor) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
         t = Mathf.Clamp01(t);
 
         __result = Mathf.Lerp(12f, 12f/(MoreGolfersPlugin.GetCustomMaxPlayers()/2f), t);
-        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.DistanceBetweenTees");
+        MoreGolfersPlugin.Logger.LogInfo($"{currentPlayers} \n{divisor} \n{t}\n{__result}");
         return false;
     }
 }
+
 [HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Getter)]
 class PatchFirstTeeOffset
 {
@@ -97,11 +99,11 @@ class PatchFirstTeeOffset
     {
         float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
         float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = (divisor / currentPlayers) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
+        float t = (currentPlayers / divisor) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
         t = Mathf.Clamp01(t);
 
         __result = Mathf.Lerp(0f, 6f, t);
-        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.FirstTeeOffset");
+        MoreGolfersPlugin.Logger.LogInfo($"{currentPlayers} \n{divisor} \n{t}\n{__result}");
         return false;
     }
 }
