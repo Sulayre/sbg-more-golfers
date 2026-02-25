@@ -33,6 +33,9 @@
         <Reference Include="GameAssembly" Publicize="true">
             <HintPath>$(SUPER_BATTLE_GOLF_PATH)\Super Battle Golf_Data\Managed\GameAssembly.dll</HintPath>
         </Reference>
+        <Reference Include="SharedAssembly" Publicize="true">
+            <HintPath>$(SUPER_BATTLE_GOLF_PATH)\Super Battle Golf_Data\Managed\SharedAssembly.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine">
             <HintPath>$(SUPER_BATTLE_GOLF_PATH)\Super Battle Golf_Data\Managed\UnityEngine.dll</HintPath>
         </Reference>
@@ -41,6 +44,9 @@
         </Reference>
         <Reference Include="UnityEngine.UI">
             <HintPath>$(SUPER_BATTLE_GOLF_PATH)\Super Battle Golf_Data\Managed\UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.Collections">
+            <HintPath>$(SUPER_BATTLE_GOLF_PATH)\Super Battle Golf_Data\Managed\Unity.Collections.dll</HintPath>
         </Reference>
         <Reference Include="Unity.TextMeshPro">
             <HintPath>$(SUPER_BATTLE_GOLF_PATH)\Super Battle Golf_Data\Managed\Unity.TextMeshPro.dll</HintPath>

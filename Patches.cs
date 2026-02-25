@@ -2,7 +2,9 @@
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Jobs;
 
 namespace MoreGolfers;
 
@@ -58,7 +60,9 @@ public static class PatchMatchSetupMenu
         }
     }
 }
+
 /*
+ * This patch crashes the game for some people past 16 players so its disabled temporarily
 [HarmonyPatch(typeof(TeeingPlatformSettings), "MaxTeeCount", MethodType.Getter)]
 class PatchMaxTeeCount
 {
@@ -95,4 +99,19 @@ class PatchFirstTeeOffset
         MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.FirstTeeOffset");
         return false;
     }
+}
+
+// thanks catalyss
+[HarmonyPatch(typeof(PlayerOcclusionManager), "Awake")]
+public static class PatchPlayerOcclusionManager
+{
+    static bool Prefix(PlayerOcclusionManager __instance)
+    {
+        __instance.EnsureSingleton();
+        __instance.transforms = new TransformAccessArray((int)MoreGolfersPlugin.GetCustomMaxPlayers());
+        __instance.visibilty = new NativeList<PlayerOcclusionManager.State>((int)MoreGolfersPlugin.GetCustomMaxPlayers()/2, Allocator.Persistent);
+        MoreGolfersPlugin.Logger.LogInfo("Patched PlayerOcclusionManager.Awake");
+        return false;
+    }
+
 }

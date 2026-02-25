@@ -28,6 +28,14 @@ public class MoreGolfersPlugin : BaseUnityPlugin
     public static float GetCurrentPlayerCount()
     {
         Logger.LogInfo("Attempting to get current player count");
+        var connectionIds = BNetworkManager.ServerConnectionIds;
+        if (connectionIds != null)
+        {
+            var count = connectionIds.Count;
+            Logger.LogInfo($"{count} players found");
+            return count;
+        }
+        /*
         var gmInstance = FindFirstObjectByType(_gmType);
         if (gmInstance != null)
         {
@@ -51,8 +59,8 @@ public class MoreGolfersPlugin : BaseUnityPlugin
             {
                 Logger.LogError($"Error accessing remotePlayers: {e.Message}");
             }
-        }
-        Logger.LogWarning("GameManager has not been initialized");
+        }*/
+        Logger.LogWarning("BNetworkManager's singleton has not been initialized");
         return GetCustomMaxPlayers();
     }
 }
