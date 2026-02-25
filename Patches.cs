@@ -80,7 +80,12 @@ class PatchDistanceBetweenTees
 {
     static bool Prefix(ref float __result)
     {
-        __result = 16f / ((MoreGolfersPlugin.GetCurrentPlayerCount() + 1) / MoreGolfersPlugin.GetCurrentPlayerCount() >= 8 ? 4 : 2);
+        float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
+        float divisor = currentPlayers >= 8 ? 4f : 2f;
+        float t = (divisor / currentPlayers) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
+        t = Mathf.Clamp01(t);
+
+        __result = Mathf.Lerp(12f, 12f/(MoreGolfersPlugin.GetCustomMaxPlayers()/2f), t);
         // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.DistanceBetweenTees");
         return false;
     }
@@ -92,10 +97,10 @@ class PatchFirstTeeOffset
     {
         float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
         float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = (currentPlayers / divisor) / MoreGolfersPlugin.GetCustomMaxPlayers();
+        float t = (divisor / currentPlayers) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
         t = Mathf.Clamp01(t);
 
-        __result = Mathf.Lerp(0f, 7f, t);
+        __result = Mathf.Lerp(0f, 6f, t);
         // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.FirstTeeOffset");
         return false;
     }
