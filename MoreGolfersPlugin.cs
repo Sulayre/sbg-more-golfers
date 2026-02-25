@@ -1,11 +1,9 @@
+using System;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
 using BepInEx.Configuration;
-using UnityEngine;
+using System.Reflection;
 
 namespace MoreGolfers;
 
@@ -14,129 +12,47 @@ public class MoreGolfersPlugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
     public static ConfigEntry<float> MaxPlayersConfig;
-    public static GameManager gameManager;
+    private static Type _gmType = typeof(GameManager);
     private void Awake()
     {
         Logger = base.Logger;
         MaxPlayersConfig = Config.Bind("General", "MaxPlayers", 32f, "Player limit");
         var harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
-
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded and patches applied!");
     }
-
     public static float GetCustomMaxPlayers()
     {
-        return MoreGolfersPlugin.MaxPlayersConfig.Value;
+        return MaxPlayersConfig.Value;
     }
-    public static float gETcURRENTpLAYER()
+    public static float GetCurrentPlayerCount()
     {
-        if (MoreGolfersPlugin.gameManager == null)
+        Logger.LogInfo("Attempting to get current player count");
+        var gmInstance = FindFirstObjectByType(_gmType);
+        if (gmInstance != null)
         {
-            MoreGolfersPlugin.gameManager = GameObject.FindAnyObjectByType<GameManager>();
-            if (MoreGolfersPlugin.gameManager == null) return GetCustomMaxPlayers();
-        }
-        return gameManager.remotePlayers.Count;
-    }
-}
-
-[HarmonyPatch(typeof(MatchSetupMenu), "<LoadValues>b__83_0")]
-public static class SliderLogicPatch
-{
-    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var codes = instructions.ToList();
-        bool found = false;
-        int finds = 0;
-        for (int i = 0; i < codes.Count; i++)
-        {
-            if (codes[i].opcode == OpCodes.Ldc_I4_S && codes[i].OperandIs(16))
+            try
             {
-                int newValue = (int)MoreGolfersPlugin.GetCustomMaxPlayers();
-                codes[i] = new CodeInstruction(OpCodes.Ldc_I4, newValue);
-                finds++;
-                found = true;
-
-                if (finds > 1)
+                var field = _gmType.GetField("remotePlayers",
+                    BindingFlags.NonPublic |
+                    BindingFlags.Instance);
+                if (field != null)
                 {
-                    MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu delegate");
-                    break;
+                    var listValue = field.GetValue(gmInstance);
+                    if (listValue is System.Collections.IList list)
+                    {
+                        float count = list.Count + 1;
+                        Logger.LogInfo($"{count} players found");
+                        return count;
+                    }
                 }
             }
-        }
-
-        if (!found)
-            MoreGolfersPlugin.Logger.LogWarning("instruction Ldc_I4_S was not found with value 16.");
-
-        return codes.AsEnumerable();
-    }
-}
-
-[HarmonyPatch(typeof(MatchSetupMenu), "OnStartClient")]
-public static class MatchSetupMenu_Patch
-{
-    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        bool found = false;
-        foreach (var instruction in instructions)
-        {
-            if (!found && instruction.opcode == OpCodes.Ldc_R4 && (float)instruction.operand == 16f)
+            catch (Exception e)
             {
-                instruction.opcode = OpCodes.Call;
-                instruction.operand = AccessTools.Method(typeof(MoreGolfersPlugin), nameof(MoreGolfersPlugin.GetCustomMaxPlayers));
-                found = true;
-                MoreGolfersPlugin.Logger.LogInfo("Patched MatchSetupMenu.onStartClient");
+                Logger.LogError($"Error accessing remotePlayers: {e.Message}");
             }
-
-            yield return instruction;
         }
-    }
-}
-
-[HarmonyPatch(typeof(TeeingPlatformSettings), "MaxTeeCount", MethodType.Getter)]
-class PatchMaxTeeCount
-{
-    static bool Prefix(ref int __result)
-    {
-        if (MoreGolfersPlugin.gameManager == null)
-        {
-            MoreGolfersPlugin.gameManager = GameObject.FindAnyObjectByType<GameManager>();
-            if (MoreGolfersPlugin.gameManager == null) return false;
-        }
-        __result = (int)MoreGolfersPlugin.MaxPlayersConfig.Value / 4;
-        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
-        return false;
-    }
-}
-[HarmonyPatch(typeof(TeeingPlatformSettings), "DistanceBetweenTees", MethodType.Getter)]
-class PatchDistanceBetweenTees
-{
-    static bool Prefix(ref float __result)
-    {
-
-        if (MoreGolfersPlugin.gameManager == null)
-        {
-            MoreGolfersPlugin.gameManager = GameObject.FindAnyObjectByType<GameManager>();
-            if (MoreGolfersPlugin.gameManager == null) return false;
-        }
-
-        __result = 16f / (float)((MoreGolfersPlugin.gETcURRENTpLAYER() + 1) / MoreGolfersPlugin.gETcURRENTpLAYER() >= 8 ? 4 : 2);
-        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
-        return false;
-    }
-}
-[HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Getter)]
-class PatchFirstTeeOffset
-{
-    static bool Prefix(ref float __result)
-    {
-        float currentPlayers = MoreGolfersPlugin.gETcURRENTpLAYER();
-        float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = MoreGolfersPlugin.GetCustomMaxPlayers() / divisor / divisor;
-        t = Mathf.Clamp01(t);
-
-        __result = Mathf.Lerp(0f, 7f, t);
-        // MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
-        return false;
+        Logger.LogWarning("GameManager has not been initialized");
+        return GetCustomMaxPlayers();
     }
 }
