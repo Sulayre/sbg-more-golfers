@@ -41,18 +41,19 @@ public class MoreGolfersPlugin : BaseUnityPlugin
     
     public static int GetCurrentPlayersPerPlatform()
     {
-        int total = GetCurrentPlayerCount();
+        int total = (int)GetCurrentPlayerCount();
         int platforms = GetActivePlatformCount();
-        return Mathf.CeilToInt((float)total / platforms);
+        return Mathf.Max(1, Mathf.CeilToInt((float)total / platforms));
     }
 
-    public static float GetDistanceBetween()
+    public static float GetDistanceBetweenTees()
     {
-        int playersPerPlat = GetCurrentPlayersPerPlatform();
         float vanillaDistance = 3.25f;
-        if (GetCurrentPlayerCount() <= 16) return vanillaDistance;
-        if (playersPerPlat <= 1) return vanillaDistance;
-        
+        int playersPerPlat = GetCurrentPlayersPerPlatform();
+        if (GetCurrentPlayerCount() <= 16 || playersPerPlat <= 1)
+        {
+            return vanillaDistance;
+        }
         float moddedDistance = 12f / (playersPerPlat - 1);
         return Mathf.Min(vanillaDistance, moddedDistance);
     }
@@ -61,7 +62,7 @@ public class MoreGolfersPlugin : BaseUnityPlugin
     {
         int count = GetCurrentPlayersPerPlatform();
         if (count <= 1) return 0f;
-        float totalWidth = (count - 1) * GetDistanceBetween();
+        float totalWidth = (count - 1) * GetDistanceBetweenTees();
         return totalWidth / 2f;
     }
 }

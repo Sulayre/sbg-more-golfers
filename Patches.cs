@@ -73,13 +73,12 @@ class PatchDistanceBetweenTees
 {
     static bool Prefix(ref float __result)
     {
-        __result = MoreGolfersPlugin.GetDistanceBetween();
+        __result = MoreGolfersPlugin.GetDistanceBetweenTees();
         return false;
     }
 }
 
-
-[HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Setter)]
+[HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Getter)]
 class PatchFirstTeeOffset
 {
     static bool Prefix(ref float __result)
