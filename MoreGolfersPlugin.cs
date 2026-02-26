@@ -3,7 +3,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using BepInEx.Configuration;
-using System.Reflection;
+using UnityEngine;
 
 namespace MoreGolfers;
 
@@ -28,17 +28,40 @@ public class MoreGolfersPlugin : BaseUnityPlugin
         return MaxPlayersConfig.Value;
     }
     
-    public static float GetCurrentPlayerCount()
+    public static int GetCurrentPlayerCount()
     {
-        //Logger.LogInfo("Attempting to get current player count");
         var connectionIds = BNetworkManager.ServerConnectionIds;
-        if (connectionIds != null)
-        {
-            var count = connectionIds.Count;
-            //Logger.LogInfo($"{count} players found");
-            return count;
-        }
-        Logger.LogWarning("BNetworkManager's singleton has not been initialized");
-        return GetCustomMaxPlayers();
+        return (connectionIds != null) ? connectionIds.Count : 1;
+    }
+    
+    public static int GetActivePlatformCount()
+    {
+        return GetCurrentPlayerCount() > 8 ? 4 : 2;
+    }
+    
+    public static int GetCurrentPlayersPerPlatform()
+    {
+        int total = GetCurrentPlayerCount();
+        int platforms = GetActivePlatformCount();
+        return Mathf.CeilToInt((float)total / platforms);
+    }
+
+    public static float GetDistanceBetween()
+    {
+        int playersPerPlat = GetCurrentPlayersPerPlatform();
+        float vanillaDistance = 3.25f;
+        if (GetCurrentPlayerCount() <= 16) return vanillaDistance;
+        if (playersPerPlat <= 1) return vanillaDistance;
+        
+        float moddedDistance = 12f / (playersPerPlat - 1);
+        return Mathf.Min(vanillaDistance, moddedDistance);
+    }
+    
+    public static float GetFirstTeeOffset()
+    {
+        int count = GetCurrentPlayersPerPlatform();
+        if (count <= 1) return 0f;
+        float totalWidth = (count - 1) * GetDistanceBetween();
+        return totalWidth / 2f;
     }
 }

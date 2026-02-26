@@ -2,9 +2,6 @@
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
-using Unity.Collections;
-using UnityEngine;
-using UnityEngine.Jobs;
 
 namespace MoreGolfers;
 
@@ -61,54 +58,38 @@ public static class PatchMatchSetupMenu
     }
 }
 
-/*
- * This patch crashes the game for some people past 16 players so its disabled temporarily
 [HarmonyPatch(typeof(TeeingPlatformSettings), "MaxTeeCount", MethodType.Getter)]
 class PatchMaxTeeCount
 {
     static bool Prefix(ref int __result)
     {
-        __result = (int)MoreGolfersPlugin.MaxPlayersConfig.Value / 4;
-        MoreGolfersPlugin.Logger.LogInfo("Patched TeeingPlatformSettings.MaxTeeCount");
+        __result = MoreGolfersPlugin.GetCurrentPlayersPerPlatform();
         return false;
     }
 }
-*/
 
 [HarmonyPatch(typeof(TeeingPlatformSettings), "DistanceBetweenTees", MethodType.Getter)]
 class PatchDistanceBetweenTees
 {
     static bool Prefix(ref float __result)
     {
-
-        float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
-        float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = (currentPlayers / divisor) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
-        t = Mathf.Clamp01(t);
-
-        __result = Mathf.Lerp(12f, 12f/(MoreGolfersPlugin.GetCustomMaxPlayers()/2f), t);
-        MoreGolfersPlugin.Logger.LogInfo($"{currentPlayers} \n{divisor} \n{t}\n{__result}");
+        __result = MoreGolfersPlugin.GetDistanceBetween();
         return false;
     }
 }
 
-[HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Getter)]
+
+[HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Setter)]
 class PatchFirstTeeOffset
 {
     static bool Prefix(ref float __result)
     {
-        float currentPlayers = MoreGolfersPlugin.GetCurrentPlayerCount();
-        float divisor = currentPlayers >= 8 ? 4f : 2f;
-        float t = (currentPlayers / divisor) / (MoreGolfersPlugin.GetCustomMaxPlayers() / divisor);
-        t = Mathf.Clamp01(t);
-
-        __result = Mathf.Lerp(0f, 6f, t);
-        MoreGolfersPlugin.Logger.LogInfo($"{currentPlayers} \n{divisor} \n{t}\n{__result}");
+        __result = MoreGolfersPlugin.GetFirstTeeOffset();
         return false;
     }
 }
 
-// thanks catalyss
+/*
 [HarmonyPatch(typeof(PlayerOcclusionManager), "Awake")]
 public static class PatchPlayerOcclusionManager
 {
@@ -122,3 +103,4 @@ public static class PatchPlayerOcclusionManager
     }
 
 }
+*/
