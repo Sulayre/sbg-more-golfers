@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace MoreGolfers;
 
-[HarmonyPatch(typeof(MatchSetupMenu), "<LoadValues>b__83_0")]
+[HarmonyPatch(typeof(MatchSetupMenu), "<LoadValues>b__84_0")]
 public static class SliderLogicPatch
 {
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -38,7 +38,7 @@ public static class SliderLogicPatch
 }
 
 [HarmonyPatch(typeof(MatchSetupMenu), "OnStartClient")]
-public static class PatchMatchSetupMenu
+static class PatchMatchSetupMenu
 {
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
@@ -59,7 +59,7 @@ public static class PatchMatchSetupMenu
 }
 
 [HarmonyPatch(typeof(TeeingPlatformSettings), "MaxTeeCount", MethodType.Getter)]
-class PatchMaxTeeCount
+static class PatchMaxTeeCount
 {
     static bool Prefix(ref int __result)
     {
@@ -69,7 +69,7 @@ class PatchMaxTeeCount
 }
 
 [HarmonyPatch(typeof(TeeingPlatformSettings), "DistanceBetweenTees", MethodType.Getter)]
-class PatchDistanceBetweenTees
+static class PatchDistanceBetweenTees
 {
     static bool Prefix(ref float __result)
     {
@@ -79,7 +79,7 @@ class PatchDistanceBetweenTees
 }
 
 [HarmonyPatch(typeof(TeeingPlatformSettings), "FirstTeeOffset", MethodType.Getter)]
-class PatchFirstTeeOffset
+static class PatchFirstTeeOffset
 {
     static bool Prefix(ref float __result)
     {
